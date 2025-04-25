@@ -13,6 +13,18 @@ def get_price():
         return jsonify({'price': price})
     except Exception as e:
         return jsonify({'error': str(e)})
+    
+
+@app.route('/')
+def index():
+    return '🚀 Прокси-сервер Bybit работает!'
+
+# Можно добавить ещё тестовый маршрут для API
+@app.route('/test')
+def test():
+    return {'message': 'API работает ✅'}
+
+
 
 if __name__ == '__main__':
     app.run()
