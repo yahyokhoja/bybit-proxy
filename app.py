@@ -7,14 +7,17 @@ app = Flask(__name__)
 def get_price():
     try:
         url = "https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT"
-        res = requests.get(url, timeout=5)
-        res.raise_for_status()  # если статус код не 200 — будет исключение
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        res = requests.get(url, headers=headers, timeout=5)
+        res.raise_for_status()
+
         data = res.json()
-        
         tickers = data.get('result', {}).get('list', [])
         if not tickers:
             return jsonify({'error': 'Пустой список тикеров'})
-        
+
         price = tickers[0].get('lastPrice')
         if price is None:
             return jsonify({'error': 'Поле lastPrice не найдено'})
@@ -24,7 +27,6 @@ def get_price():
         return jsonify({'error': f'Ошибка запроса: {str(e)}'})
     except Exception as e:
         return jsonify({'error': f'Ошибка обработки данных: {str(e)}'})
-
 
 
 
