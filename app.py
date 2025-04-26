@@ -25,6 +25,17 @@ def test():
     return {'message': 'API работает ✅'}
 
 
+@app.route('/narh')
+def narh():
+    try:
+        res = requests.get("https://bybit-proxy-ehep.onrender.com/price")
+        price = res.json().get("price", "неизвестно")
+    except:
+        price = "ошибка"
+
+    return render_template("narh.html", price=price)
+
+
 
 if __name__ == '__main__':
     app.run()
