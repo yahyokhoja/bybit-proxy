@@ -34,17 +34,6 @@ def index():
 def test():
     return {'message': 'API работает ✅'}
 
-# Страница для отображения курса
-@app.route('/narh')
-def narh():
-    try:
-        # Запрос к вашему прокси-серверу для получения курса
-        res = requests.get("https://bybit-proxy-ehep.onrender.com/price")
-        price = res.json().get("price", "неизвестно")
-    except Exception as e:
-        price = "ошибка: " + str(e)
-
-    return render_template("narh.html", price=price)
 
 
 if __name__ == '__main__':
