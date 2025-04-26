@@ -7,21 +7,24 @@ app = Flask(__name__)
 def get_price():
     try:
         url = "https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT"
-        res = requests.get(url)
-        if res.status_code != 200:
-            return jsonify({'error': f'Ошибка при запросе к API Bybit: {res.status_code}'})
-        
+        res = requests.get(url, timeout=5)
+        res.raise_for_status()  # если статус код не 200 — будет исключение
         data = res.json()
+        
         tickers = data.get('result', {}).get('list', [])
         if not tickers:
             return jsonify({'error': 'Пустой список тикеров'})
         
-        price = tickers[0].get('lastPrice', 'неизвестно')
+        price = tickers[0].get('lastPrice')
+        if price is None:
+            return jsonify({'error': 'Поле lastPrice не найдено'})
+
         return jsonify({'price': price})
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Ошибка запроса: {str(e)}'})
     except Exception as e:
-        import traceback
-        traceback.print_exc()  # добавим вывод ошибки в логи
-        return jsonify({'error': f"Ошибка: {str(e)}"})
+        return jsonify({'error': f'Ошибка обработки данных: {str(e)}'})
+
 
 
 
