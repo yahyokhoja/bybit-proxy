@@ -3,6 +3,7 @@ import hashlib
 import requests
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import threading
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Это важно для работы с сессиями
@@ -18,9 +19,12 @@ def start_bot():
     while bot_running:
         # Использование API-ключей для торговли на Bybit
         if api_key and api_secret:
-            data = get_bybit_data(api_key, api_secret)
-            print("Bot is running with API Key:", api_key)
-            print("Bybit API response:", data)
+            try:
+                data = get_bybit_data(api_key, api_secret)
+                print("Bot is running with API Key:", api_key)
+                print("Bybit API response:", data)
+            except Exception as e:
+                print(f"Error fetching data from Bybit: {e}")
         # Пауза между запросами (например, раз в минуту)
         time.sleep(60)
 
@@ -36,7 +40,12 @@ def get_bybit_data(api_key, api_secret):
     params['sign'] = generate_signature(params, api_secret)
     
     response = requests.get(url, params=params)
-    return response.json()
+    
+    # Проверка на успешный ответ от API
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Bybit API error: {response.status_code}, {response.text}")
 
 # Генерация подписи для API-запроса
 def generate_signature(params, api_secret):
@@ -71,7 +80,7 @@ def toggle_bot():
         bot_running = False
     else:
         bot_running = True
-        threading.Thread(target=start_bot).start()
+        threading.Thread(target=start_bot, daemon=True).start()  # daemon=True позволяет завершить поток при завершении основного процесса
     return jsonify({"status": "running" if bot_running else "stopped"})
 
 if __name__ == "__main__":
