@@ -1,5 +1,3 @@
 flask
 requests
-gunicorn
-flask requests
 gunicorn==20.1.0
