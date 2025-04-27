@@ -1,30 +1,78 @@
-from flask import Flask, jsonify
+import time
+import hashlib
 import requests
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import threading
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Это важно для работы с сессиями
 
-@app.route('/price')
-def get_price():
-    try:
-        url = "https://api.bybit.com/v5/market/tickers?category=linear&symbol=BTCUSDT"
-        res = requests.get(url)
-        data = res.json()
-        price = data['result']['list'][0]['lastPrice']
-        return jsonify({'price': price})
-    except Exception as e:
-        return jsonify({'error': str(e)})
+# Переменные для хранения состояния
+bot_running = False
+api_key = None
+api_secret = None
+
+# Функция для старта бота
+def start_bot():
+    global bot_running
+    while bot_running:
+        # Использование API-ключей для торговли на Bybit
+        if api_key and api_secret:
+            data = get_bybit_data(api_key, api_secret)
+            print("Bot is running with API Key:", api_key)
+            print("Bybit API response:", data)
+        # Пауза между запросами (например, раз в минуту)
+        time.sleep(60)
+
+# Получение данных с Bybit API (пример)
+def get_bybit_data(api_key, api_secret):
+    url = "https://api.bybit.com/v2/public/time"
+    params = {
+        'api_key': api_key,
+        'timestamp': str(int(time.time() * 1000)),
+    }
     
+    # Генерация подписи для запроса
+    params['sign'] = generate_signature(params, api_secret)
+    
+    response = requests.get(url, params=params)
+    return response.json()
 
+# Генерация подписи для API-запроса
+def generate_signature(params, api_secret):
+    sorted_params = sorted(params.items())
+    param_string = '&'.join(f"{k}={v}" for k, v in sorted_params)
+    signature = hashlib.sha256((param_string + f"&api_secret={api_secret}").encode('utf-8')).hexdigest()
+    return signature
+
+# Главная страница
 @app.route('/')
 def index():
-    return '🚀 Прокси-сервер Bybit работает!'
+    return render_template('index.html', bot_running=bot_running)
 
-# Можно добавить ещё тестовый маршрут для API
-@app.route('/test')
-def test():
-    return {'message': 'API работает ✅'}
+# Страница для ввода API-ключа
+@app.route('/set_api_keys', methods=['POST'])
+def set_api_keys():
+    global api_key, api_secret
+    api_key = request.form['api_key']
+    api_secret = request.form['api_secret']
+    
+    # Сохраняем ключи в сессии для последующего использования
+    session['api_key'] = api_key
+    session['api_secret'] = api_secret
+    
+    return redirect(url_for('index'))
 
+# Страница для запуска/остановки бота
+@app.route('/toggle_bot', methods=['POST'])
+def toggle_bot():
+    global bot_running
+    if bot_running:
+        bot_running = False
+    else:
+        bot_running = True
+        threading.Thread(target=start_bot).start()
+    return jsonify({"status": "running" if bot_running else "stopped"})
 
-
-if __name__ == '__main__':
-    app.run()
+if __name__ == "__main__":
+    app.run(debug=True)

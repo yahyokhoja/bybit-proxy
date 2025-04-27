@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Trading Bot Control</h1>
+
+    <h2>Enter API Key and Secret Key</h2>
+    <form action="/set_api_keys" method="POST">
+        <label for="api_key">API Key:</label>
+        <input type="text" id="api_key" name="api_key" required>
+        <br><br>
+        <label for="api_secret">Secret Key:</label>
+        <input type="text" id="api_secret" name="api_secret" required>
+        <br><br>
+        <input type="submit" value="Save Keys">
+    </form>
+
+    <p>Status: <span id="bot-status">{{ 'Running' if bot_running else 'Stopped' }}</span></p>
+    <button id="toggle-btn">{{ 'Stop Bot' if bot_running else 'Start Bot' }}</button>
+
+    <script>
+        $(document).ready(function() {
+            $('#toggle-btn').click(function() {
+                $.post('/toggle_bot', function(data) {
+                    if (data.status === "running") {
+                        $('#bot-status').text('Running');
+                        $('#toggle-btn').text('Stop Bot');
+                    } else {
+                        $('#bot-status').text('Stopped');
+                        $('#toggle-btn').text('Start Bot');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
