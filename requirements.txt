@@ -1,4 +1,6 @@
+<<<<<<< HEAD
 flask
 requests
 gunicorn
 flask requests
+=======
