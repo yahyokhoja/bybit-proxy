@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Данные по рынку</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Символ</th>
+            <th>Последняя цена</th>
+            <th>24ч Изменение (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in data %}
+        <tr>
+            <td>{{ item.symbol }}</td>
+            <td>{{ item.lastPrice }}</td>
+            <td>{{ item.price24hPcnt }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

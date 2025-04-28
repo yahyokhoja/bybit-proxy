@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Создать ордер</h2>
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Сторона сделки</label>
+        <select class="form-select" name="side">
+            <option value="Buy">Покупка</option>
+            <option value="Sell">Продажа</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Количество (Qty)</label>
+        <input type="text" class="form-control" name="qty" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Цена (Price)</label>
+        <input type="text" class="form-control" name="price" required>
+    </div>
+    <button type="submit" class="btn btn-success">Отправить ордер</button>
+</form>
+
+{% if message %}
+<div class="alert alert-info mt-4">
+    {{ message }}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Баланс аккаунта</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Валюта</th>
+            <th>Доступный баланс</th>
+            <th>Замороженный баланс</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for account in balance %}
+            {% for coin in account.coin %}
+            <tr>
+                <td>{{ coin.coin }}</td>
+                <td>{{ coin.availableToWithdraw }}</td>
+                <td>{{ coin.locked }}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
