@@ -1,20 +1,28 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_session import Session
-import bybit_client
-import os
+import bybit_client  # подключаем свой код для работы с API
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # замени на что-то более безопасное
+app.secret_key = 'supersecretkey'  # замени на более безопасный ключ
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    error = ''
     if request.method == 'POST':
-        session['api_key'] = request.form['api_key']
-        session['api_secret'] = request.form['api_secret']
-        return redirect(url_for('market'))
-    return render_template('index.html')
+        api_key = request.form['api_key']
+        api_secret = request.form['api_secret']
+
+        # Проверяем валидность ключей
+        if bybit_client.check_keys(api_key, api_secret):
+            session['api_key'] = api_key
+            session['api_secret'] = api_secret
+            return redirect(url_for('market'))
+        else:
+            error = 'Неверные API ключи. Пожалуйста, попробуйте снова.'
+
+    return render_template('index.html', error=error)
 
 @app.route('/market')
 def market():
@@ -41,7 +49,12 @@ def balance():
         return redirect(url_for('index'))
     balance = bybit_client.get_balance(session['api_key'], session['api_secret'])
     return render_template('balance.html', balance=balance)
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)

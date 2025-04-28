@@ -3,72 +3,88 @@ import time
 import hmac
 import hashlib
 
-API_URL = "https://api.bybit.com"
+# Настройки API
+BASE_URL = "https://api.bybit.com"
 
-def get_signature(api_secret, params):
-    sorted_params = sorted(params.items())
-    query_string = "&".join([f"{k}={v}" for k, v in sorted_params])
-    return hmac.new(api_secret.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+def sign(api_secret, params):
+    """Создание подписи для запросов"""
+    param_str = '&'.join([f"{key}={value}" for key, value in sorted(params.items())])
+    return hmac.new(api_secret.encode('utf-8'), param_str.encode('utf-8'), hashlib.sha256).hexdigest()
+
+def check_keys(api_key, api_secret):
+    """Проверка валидности API ключей через запрос баланса"""
+    try:
+        timestamp = str(int(time.time() * 1000))
+        params = {
+            "timestamp": timestamp,
+            "api_key": api_key,
+        }
+        params["sign"] = sign(api_secret, params)
+
+        response = requests.get(f"{BASE_URL}/v2/private/wallet/balance", params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data['ret_code'] == 0:
+                return True
+            else:
+                return False
+        else:
+            return False
+    except Exception as e:
+        print(f"Ошибка проверки ключей: {e}")
+        return False
 
 def get_market_data():
+    """Просто получить информацию о рынке"""
     try:
-        response = requests.get(f"{API_URL}/v5/market/tickers?category=linear")
-        if response.status_code == 200:
-            return response.json().get('result', {}).get('list', [])
+        response = requests.get(f"{BASE_URL}/v2/public/tickers")
+        return response.json()
     except Exception as e:
-        print("Ошибка получения данных:", e)
-    return []
+        print(f"Ошибка получения маркет данных: {e}")
+        return None
 
 def place_order(api_key, api_secret, side, qty, price):
-    endpoint = "/v5/order/create"
-    url = API_URL + endpoint
-    timestamp = str(int(time.time() * 1000))
-    params = {
-        "category": "linear",
-        "symbol": "BTCUSDT",
-        "side": side.upper(),
-        "orderType": "LIMIT",
-        "qty": qty,
-        "price": price,
-        "timeInForce": "GTC",
-        "timestamp": timestamp,
-        "api_key": api_key,
-    }
-    sign = get_signature(api_secret, params)
-    headers = {
-        "X-BYBIT-API-KEY": api_key,
-        "Content-Type": "application/json"
-    }
-    params["sign"] = sign
+    """Создать ордер"""
     try:
-        response = requests.post(url, json=params, headers=headers)
-        if response.status_code == 200:
-            return "Ордер успешно размещен!"
+        timestamp = str(int(time.time() * 1000))
+        params = {
+            "api_key": api_key,
+            "symbol": "BTCUSDT",
+            "side": side,
+            "order_type": "Limit",
+            "qty": qty,
+            "price": price,
+            "time_in_force": "GoodTillCancel",
+            "timestamp": timestamp,
+        }
+        params["sign"] = sign(api_secret, params)
+
+        response = requests.post(f"{BASE_URL}/v2/private/order/create", data=params)
+        data = response.json()
+        if data['ret_code'] == 0:
+            return "Ордер успешно создан!"
         else:
-            return f"Ошибка размещения ордера: {response.text}"
+            return f"Ошибка: {data.get('ret_msg', 'Неизвестная ошибка')}"
     except Exception as e:
-        return f"Ошибка: {e}"
+        return f"Ошибка создания ордера: {e}"
 
 def get_balance(api_key, api_secret):
-    endpoint = "/v5/account/wallet-balance"
-    url = API_URL + endpoint
-    timestamp = str(int(time.time() * 1000))
-    params = {
-        "accountType": "UNIFIED",
-        "timestamp": timestamp,
-        "api_key": api_key,
-    }
-    sign = get_signature(api_secret, params)
-    headers = {
-        "X-BYBIT-API-KEY": api_key,
-        "Content-Type": "application/json"
-    }
-    params["sign"] = sign
+    """Получить баланс"""
     try:
-        response = requests.get(url, params=params, headers=headers)
-        if response.status_code == 200:
-            return response.json().get('result', {}).get('list', [])
+        timestamp = str(int(time.time() * 1000))
+        params = {
+            "api_key": api_key,
+            "timestamp": timestamp,
+        }
+        params["sign"] = sign(api_secret, params)
+
+        response = requests.get(f"{BASE_URL}/v2/private/wallet/balance", params=params)
+        data = response.json()
+        if data['ret_code'] == 0:
+            return data['result']
         else:
-            return f"Ошибка получения баланса: {response.text}"
+            return {}
     except Exception as e:
-        return f"Ошибка: {e}"
+        print(f"Ошибка получения баланса: {e}")
+        return {}

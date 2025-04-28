@@ -1,29 +1,33 @@
+
 {% extends "layout.html" %}
 
 {% block content %}
-<h2>Создать ордер</h2>
-<form method="post">
-    <div class="mb-3">
-        <label class="form-label">Сторона сделки</label>
-        <select class="form-select" name="side">
-            <option value="Buy">Покупка</option>
-            <option value="Sell">Продажа</option>
-        </select>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow p-4">
+            <h2 class="mb-4 text-center">Создать ордер</h2>
+            {% if message %}
+                <div class="alert alert-info">{{ message }}</div>
+            {% endif %}
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">Тип сделки</label>
+                    <select class="form-select" name="side" required>
+                        <option value="Buy">Покупка</option>
+                        <option value="Sell">Продажа</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Количество</label>
+                    <input type="number" class="form-control" name="qty" step="any" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Цена (0 = рыночная)</label>
+                    <input type="number" class="form-control" name="price" step="any" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Отправить ордер</button>
+            </form>
+        </div>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Количество (Qty)</label>
-        <input type="text" class="form-control" name="qty" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Цена (Price)</label>
-        <input type="text" class="form-control" name="price" required>
-    </div>
-    <button type="submit" class="btn btn-success">Отправить ордер</button>
-</form>
-
-{% if message %}
-<div class="alert alert-info mt-4">
-    {{ message }}
 </div>
-{% endif %}
 {% endblock %}
