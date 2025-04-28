@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_session import Session
-import bybit_client  # подключаем твой код
+import bybit_client
+import os
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # замени на что-то более безопасное
@@ -42,4 +43,5 @@ def balance():
     return render_template('balance.html', balance=balance)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
